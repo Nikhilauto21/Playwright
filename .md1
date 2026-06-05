@@ -1,0 +1,8 @@
+Open https://practicetestautomation.com
+login with valid credential 
+Verify login succesfull message
+go to course section
+verify land on course page
+verify selenium webdriver link
+Open selenium webdriver link and switch to new tab page
+and verify url of udemy course
