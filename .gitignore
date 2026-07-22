@@ -6,6 +6,13 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Playwright artifacts
+**/*.webm
+**/*.zip
+**/*.png
+
+# Allure
 allure-report/
 allure-results/
 
