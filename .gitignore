@@ -18,3 +18,7 @@ allure-results/
 
 # Environment variables
 .env
+
+# Naukri agent session
+/auth/
+/naukri/*.xlsx

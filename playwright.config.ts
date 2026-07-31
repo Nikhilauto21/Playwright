@@ -5,8 +5,11 @@ import { defineConfig, devices } from '@playwright/test';
  * https://github.com/motdotla/dotenv
  */
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+const authFile = path.resolve(__dirname, 'auth', 'naukri.json');
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -31,7 +34,10 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
     video: 'on',
-    headless: process.env.CI ? true : false,
+    /* Headless by default so no browser window opens. Set HEADLESS=false to watch. */
+    headless: process.env.HEADLESS !== 'false',
+    /* Reuse the saved Naukri session if a previous run created one. */
+    storageState: fs.existsSync(authFile) ? authFile : undefined,
   },
 
   /* Configure projects for major browsers */
@@ -41,7 +47,13 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         launchOptions: {
-          args: ['--disable-features=BlockThirdPartyCookies'],
+          args: [
+            '--disable-blink-features=AutomationControlled',
+            '--disable-features=BlockThirdPartyCookies',
+          ],
+        },
+        addInitScript: () => {
+          Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
         },
       },
     },

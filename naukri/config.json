@@ -1,0 +1,9 @@
+{
+  "title": "qa automation",
+  "experience": "3-8",
+  "location": "pune",
+  "applyOnlyToday": true,
+  "autoApply": true,
+  "maxApplications": 5,
+  "excelFile": "naukri/job_tracker.xlsx"
+}
