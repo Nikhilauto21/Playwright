@@ -7,5 +7,13 @@
   "maxApplications": 5,
   "excelFile": "naukri/job_tracker.xlsx",
   "dailyExcelDir": "naukri/reports",
+  "maxPages": 0,
+  "includeHybridRemote": true,
+  "filters": {
+    "workMode": ["Work from office", "Hybrid", "Remote"],
+    "postedBy": ["Company Jobs", "Consultant Jobs"],
+    "freshnessDays": 15,
+    "location": "Pune"
+  },
   "profileKeywords": "playwright, selenium, cypress, java, javascript, python, typescript, rest api, test automation, api testing, testng, cucumber, allure, jenkins, git, agile, regression testing"
 }

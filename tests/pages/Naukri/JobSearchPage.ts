@@ -21,16 +21,26 @@ export interface JobPreferences {
   experience: string;
   location: string;
   applyOnlyToday: boolean;
+  includeHybridRemote?: boolean;
+}
+
+export interface JobFilters {
+  workMode: string[];
+  postedBy: string[];
+  freshnessDays: number;
+  location: string;
 }
 
 export class JobSearchPage extends BasePage {
   readonly jobCards: Locator;
   readonly jobTitles: Locator;
+  readonly nextPageLink: Locator;
 
   constructor(page: Page) {
     super(page);
     this.jobCards = page.locator('.cust-job-tuple');
     this.jobTitles = page.locator('.cust-job-tuple a.title');
+    this.nextPageLink = page.locator('[class*="styles_pagination__"] a', { hasText: 'Next' }).first();
   }
 
   async dismissPrivacyPolicy(): Promise<void> {
@@ -59,7 +69,7 @@ export class JobSearchPage extends BasePage {
   async getDetailedJobCards(): Promise<DetailedJobCard[]> {
     return await this.jobCards.evaluateAll(nodes => {
       const out: DetailedJobCard[] = [];
-      for (const node of nodes.slice(0, 30)) {
+      for (const node of nodes.slice(0, 100)) {
         const card = node as HTMLElement;
         const titleEl = card.querySelector<HTMLAnchorElement>('a.title');
         const companyEl = card.querySelector<HTMLElement>('a.comp-name');
@@ -81,18 +91,91 @@ export class JobSearchPage extends BasePage {
     });
   }
 
-  async getMatchingJobCards(prefs: JobPreferences): Promise<DetailedJobCard[]> {
-    const cards = await this.getDetailedJobCards();
+  async getMatchingJobCards(prefs: JobPreferences, cards?: DetailedJobCard[]): Promise<DetailedJobCard[]> {
+    const source = cards ?? (await this.getDetailedJobCards());
     const required = this.parseExperience(prefs.experience);
-    const location = prefs.location.toLowerCase();
-    return cards.filter(card => {
+    const target = (prefs.location ?? '').toLowerCase();
+    return source.filter(card => {
       if (!card.href || !card.title) return false;
       const exp = this.parseExperience(card.experience);
       const overlaps = exp.max >= required.min && exp.min <= required.max;
       if (!overlaps) return false;
-      if (location && !card.location.toLowerCase().includes(location)) return false;
+      const loc = card.location.toLowerCase();
+      const locOk =
+        !target ||
+        loc.includes(target) ||
+        (!!prefs.includeHybridRemote && (loc.includes('hybrid') || loc.includes('remote')));
+      if (!locOk) return false;
       if (prefs.applyOnlyToday && this.parsePostedDays(card.posted) > 1) return false;
       return true;
+    });
+  }
+
+  async applyFilters(filters: JobFilters): Promise<void> {
+    await this.page.waitForSelector('[class*="styles_filterHeading"]', { timeout: 15000 });
+    if (filters.workMode?.length) {
+      for (const label of filters.workMode) await this.clickCheckboxFilter('Work mode', label);
+    }
+    if (filters.postedBy?.length) {
+      for (const label of filters.postedBy) await this.clickCheckboxFilter('Posted by', label);
+    }
+    if (filters.freshnessDays) {
+      await this.selectFreshness(`Last ${filters.freshnessDays} days`);
+    }
+    if (filters.location) {
+      await this.clickCheckboxFilter('Location', filters.location);
+    }
+  }
+
+  async clickNext(): Promise<void> {
+    await this.nextPageLink.click();
+  }
+
+  private async clickCheckboxFilter(section: string, label: string): Promise<void> {
+    const urlBefore = this.page.url();
+    const heading = this.page.locator('[class*="styles_filterHeading"]', { hasText: section }).first();
+    const option = heading
+      .locator('xpath=..')
+      .locator('[class*="styles_chckBoxCont"]', { hasText: label })
+      .first();
+    const input = option.locator('input');
+    if (await input.isChecked().catch(() => false)) return;
+    await option.locator('label').click();
+    await this.page.waitForURL(u => u.href !== urlBefore, { timeout: 20000 }).catch(() => undefined);
+    await this.page.waitForTimeout(300);
+  }
+
+  private async selectFreshness(label: string): Promise<void> {
+    const urlBefore = this.page.url();
+    const heading = this.page.locator('[class*="styles_filterHeading"]', { hasText: 'Freshness' }).first();
+    const container = heading.locator('xpath=..');
+    await container.locator('button[class*="styles_ss__menu-btn"]').click();
+    const menuItem = this.page.locator('ul[class*="styles_ss__menu"] li', { hasText: label }).first();
+    await menuItem.click();
+    await this.page.waitForURL(u => u.href !== urlBefore, { timeout: 20000 }).catch(() => undefined);
+    await this.page.waitForTimeout(300);
+  }
+
+  async getNextPageHref(): Promise<string> {
+    return await this.page.evaluate(() => {
+      const bar = document.querySelector<HTMLElement>('[class*="styles_pagination__"]');
+      if (!bar) return '';
+      const next = Array.from(bar.querySelectorAll<HTMLAnchorElement>('a')).find(
+        a => (a.textContent || '').trim() === 'Next'
+      );
+      return next?.href ?? '';
+    });
+  }
+
+  async getTotalResults(): Promise<number> {
+    return await this.page.evaluate(() => {
+      const candidates = Array.from(document.querySelectorAll('div, span'));
+      for (const el of candidates) {
+        const text = (el.textContent || '').trim().replace(/\s+/g, ' ');
+        const m = text.match(/^[\d,\s-]+\s+of\s+(\d[\d,]*)$/i);
+        if (m) return Number(m[1].replace(/,/g, ''));
+      }
+      return 0;
     });
   }
 

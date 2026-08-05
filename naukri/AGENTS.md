@@ -112,6 +112,14 @@ npx playwright test tests/specs/Naukri/naukri_job_agent.spec.ts --project=chromi
 - Report location: `naukri/reports/<title-location>_YYYY-MM-DD.xlsx` (dir set by `dailyExcelDir` in `naukri/config.json`).
 - Columns: Title, Company, Location, Experience, Score, Skills, Posted, Link.
 - `Score` is a 0-100 keyword match against the comma-separated `profileKeywords` in `naukri/config.json` (edit them to match your skills, e.g. `playwright, selenium, java, ...`).
+- Crawls **every** results page via the pagination bar ("Next" links) and dedupes jobs by their link. To cap the crawl, set `maxPages` in `naukri/config.json` (e.g. `10`); `0` means all pages.
+- `filters` in `naukri/config.json` are applied through the Naukri filter sidebar **before** crawling:
+  - `workMode` (e.g. `["Work from office", "Hybrid", "Remote"]`) - select all that apply
+  - `postedBy` (e.g. `["Company Jobs", "Consultant Jobs"]`)
+  - `freshnessDays` (e.g. `15` for "Last 15 days")
+  - `location` (e.g. `"Pune"`)
+  Pagination clicks retain the filters because Naukri keeps them in the URL query string.
+- `includeHybridRemote: true` also keeps jobs whose card location is "Hybrid" or "Remote" in addition to the configured `location`.
 - No applications are submitted; it is a search + report agent only.
 - Requires the same `.env` credentials and the saved session in `auth/naukri.json`.
 
