@@ -105,6 +105,44 @@ Run it:
 npx playwright test tests/specs/Naukri/naukri_job_agent.spec.ts --project=chromium --reporter=line,allure-playwright
 ```
 
+## Daily report agent (scheduled, date-stamped Excel)
+
+`tests/specs/Naukri/naukri_daily_agent.spec.ts` runs the same search every day and writes a **fresh, date-stamped** Excel file (one per day) instead of appending to a master file.
+
+- Report location: `naukri/reports/<title-location>_YYYY-MM-DD.xlsx` (dir set by `dailyExcelDir` in `naukri/config.json`).
+- Columns: Title, Company, Location, Experience, Score, Skills, Posted, Link.
+- `Score` is a 0-100 keyword match against the comma-separated `profileKeywords` in `naukri/config.json` (edit them to match your skills, e.g. `playwright, selenium, java, ...`).
+- No applications are submitted; it is a search + report agent only.
+- Requires the same `.env` credentials and the saved session in `auth/naukri.json`.
+
+Run manually (headed - Naukri blocks headless):
+
+```
+powershell -ExecutionPolicy Bypass -File run-daily.ps1
+```
+
+or
+
+```
+npm run naukri:daily
+```
+
+### Schedule it daily (Windows Task Scheduler)
+
+```
+powershell -ExecutionPolicy Bypass -File setup-daily-task.ps1            # every day at 09:00
+powershell -ExecutionPolicy Bypass -File setup-daily-task.ps1 -Time 18:30 # custom time
+```
+
+This registers a task named `NaukriDailyJobAgent` that launches `run-daily.ps1` each day. Because Naukri blocks headless Chromium, a small browser window opens for a few seconds during the run. Useful commands:
+
+```
+Get-ScheduledTask -TaskName NaukriDailyJobAgent
+Start-ScheduledTask -TaskName NaukriDailyJobAgent          # run now
+Disable-ScheduledTask -TaskName NaukriDailyJobAgent
+Unregister-ScheduledTask -TaskName NaukriDailyJobAgent -Confirm:$false
+```
+
 ## Launch (headless, ready to run)
 
 1. **Give your credentials** in the root `.env` file (already created, gitignored):

@@ -12,6 +12,7 @@ export interface DetailedJobCard {
   location: string;
   experience: string;
   posted: string;
+  skills: string[];
   href: string;
 }
 
@@ -60,18 +61,20 @@ export class JobSearchPage extends BasePage {
       const out: DetailedJobCard[] = [];
       for (const node of nodes.slice(0, 30)) {
         const card = node as HTMLElement;
-        const a = card.querySelector('a.title');
-        const lines = (card.innerText ?? '').split('\n').map(l => l.trim()).filter(Boolean);
-        const expIdx = lines.findIndex(l => /^\d+\s*-\s*\d+\s*Yrs?$/i.test(l));
-        const text = lines.join(' ');
-        const postedMatch = text.match(/(\d+)\+?\s*day[s]?\s*ago|today|just now/i);
+        const titleEl = card.querySelector<HTMLAnchorElement>('a.title');
+        const companyEl = card.querySelector<HTMLElement>('a.comp-name');
+        const expEl = card.querySelector<HTMLElement>('span.exp-wrap');
+        const locEl = card.querySelector<HTMLElement>('span.loc-wrap');
+        const postedEl = card.querySelector<HTMLElement>('span.job-post-day');
+        const skillEls = Array.from(card.querySelectorAll<HTMLElement>('ul.tags-gt li.tag-li'));
         out.push({
-          title: lines[0] ?? '',
-          company: lines[1] ?? '',
-          location: expIdx >= 0 ? (lines[expIdx + 1] ?? '') : '',
-          experience: expIdx >= 0 ? lines[expIdx] : '',
-          posted: postedMatch ? postedMatch[0] : '',
-          href: (a as HTMLAnchorElement)?.href ?? '',
+          title: titleEl?.textContent?.trim() ?? '',
+          company: companyEl?.textContent?.trim() ?? '',
+          location: locEl?.textContent?.trim() ?? '',
+          experience: expEl?.textContent?.trim() ?? '',
+          posted: postedEl?.textContent?.trim() ?? '',
+          skills: skillEls.map(s => s.textContent?.trim() ?? '').filter(Boolean).slice(0, 12),
+          href: titleEl?.href ?? '',
         });
       }
       return out;

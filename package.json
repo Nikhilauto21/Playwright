@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "naukri:agent": "playwright test tests/specs/Naukri/naukri_job_agent.spec.ts --project=chromium --reporter=line",
+    "naukri:daily": "playwright test tests/specs/Naukri/naukri_daily_agent.spec.ts --project=chromium --reporter=line",
     "naukri:flow": "playwright test tests/specs/Naukri/naukri_job_flow.spec.ts --project=chromium --reporter=line",
     "naukri:report": "allure generate allure-results --clean -o allure-report && allure open allure-report"
   },

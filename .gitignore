@@ -22,3 +22,4 @@ allure-results/
 # Naukri agent session
 /auth/
 /naukri/*.xlsx
+/naukri/reports/

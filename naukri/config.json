@@ -5,5 +5,7 @@
   "applyOnlyToday": true,
   "autoApply": true,
   "maxApplications": 5,
-  "excelFile": "naukri/job_tracker.xlsx"
+  "excelFile": "naukri/job_tracker.xlsx",
+  "dailyExcelDir": "naukri/reports",
+  "profileKeywords": "playwright, selenium, cypress, java, javascript, python, typescript, rest api, test automation, api testing, testng, cucumber, allure, jenkins, git, agile, regression testing"
 }

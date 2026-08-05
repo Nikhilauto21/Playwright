@@ -7,6 +7,8 @@ export interface JobRecord {
   experience: string;
   posted: string;
   link: string;
+  skills?: string;
+  score?: number;
   applied: boolean;
   appliedAt: string;
 }
@@ -67,6 +69,44 @@ export class JobTracker {
     sheet.getColumn(7).width = 80;
     sheet.getColumn(8).width = 10;
     sheet.getColumn(9).width = 24;
+
+    await workbook.xlsx.writeFile(filePath);
+  }
+
+  static async writeDaily(filePath: string, jobs: JobRecord[]): Promise<void> {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Jobs');
+    const headers = ['Title', 'Company', 'Location', 'Experience', 'Score', 'Skills', 'Posted', 'Link'];
+    sheet.addRow(headers);
+    sheet.getRow(1).font = { bold: true };
+    sheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1A73E8' },
+    };
+    sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+    for (const job of jobs) {
+      const row = sheet.addRow([
+        job.title,
+        job.company,
+        job.location,
+        job.experience,
+        job.score ?? '',
+        job.skills ?? '',
+        job.posted,
+        '',
+      ]);
+      row.getCell(8).value = { text: job.link, hyperlink: job.link };
+      row.getCell(8).style.font = { color: { argb: 'FF0563C1' }, underline: true };
+    }
+
+    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+    sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
+    const widths: Record<string, number> = { 1: 48, 2: 30, 3: 22, 4: 14, 5: 9, 6: 55, 7: 14, 8: 60 };
+    Object.entries(widths).forEach(([col, width]) => {
+      sheet.getColumn(Number(col)).width = width;
+    });
 
     await workbook.xlsx.writeFile(filePath);
   }
